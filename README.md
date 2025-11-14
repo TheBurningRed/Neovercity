@@ -9,4 +9,4 @@ For instance a file called `py_hw_04_01.py` stands for "Python homework module 0
 # TurboTeem Python Bot GoIT
 ## A group project as final result of initial python core course
 
-Located under `/goit-pycore-team-project` folder
+Located under `/goit-pycore-team-project` directory
