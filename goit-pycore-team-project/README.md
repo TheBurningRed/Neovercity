@@ -26,7 +26,7 @@
 
 у яких день народження через задану кількість днів від поточної дати
 
-<img src="assets/merch_woomen.png" alt="merch_woomen" height="200">
+<img src="assets/merch_woomen.png" alt="merch_woomen" height="400" width="auto">
 
 --- 
 
