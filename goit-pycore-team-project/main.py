@@ -3,47 +3,43 @@ import re
 from collections import UserDict
 from datetime import datetime, timedelta
 from difflib import get_close_matches
-
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import Completer, Completion
+from prompt_toolkit.completion import Completer, Completion, WordCompleter
 
 
-BLACK = '\033[30m'
-RED = '\033[31m'
-GREEN = '\033[92m'
-YELLOW = '\033[33m'
-BLUE = '\033[94m'
-MAGENTA = '\033[95m'
-CYAN = '\033[96m'
-WHITE = '\033[37m'
-LIGHT_GRAY = '\x1b[38;5;248m'
-RESET = '\033[0m'
+BLACK = "\033[30m"
+RED = "\033[31m"
+GREEN = "\033[92m"
+YELLOW = "\033[33m"
+BLUE = "\033[94m"
+MAGENTA = "\033[95m"
+CYAN = "\033[96m"
+WHITE = "\033[37m"
+LIGHT_GRAY = "\x1b[38;5;248m"
+RESET = "\033[0m"
 
-BLACK_BG = '\033[40m'
-RED_BG = '\033[41m'
-GREEN_BG = '\033[42m'
-YELLOW_BG = '\033[43m'
-BLUE_BG = '\033[44m'
-MAGENTA_BG = '\033[45m'
-CYAN_BG = '\033[46m'
-WHITE_BG = '\033[47m'
-LIGHT_GRAY_BG = '\033[100m'
-RESET_BG = '\033[0m'
+BLACK_BG = "\033[40m"
+RED_BG = "\033[41m"
+GREEN_BG = "\033[42m"
+YELLOW_BG = "\033[43m"
+BLUE_BG = "\033[44m"
+MAGENTA_BG = "\033[45m"
+CYAN_BG = "\033[46m"
+WHITE_BG = "\033[47m"
+LIGHT_GRAY_BG = "\033[100m"
+RESET_BG = "\033[0m"
 
 
 class ContactError(Exception):
     pass
 
 
-
 class PhoneValidationError(ContactError):
     pass
 
 
-
 class DateValidationError(ContactError):
     pass
-
 
 
 class RecordNotFoundError(ContactError):
@@ -59,11 +55,11 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError:
-            return "⚠️  Invalid format. Check that the arguments are entered correctly.\n"
-        except IndexError:
             return (
-                "⚠️  Insufficient arguments. Enter a command, name, and optionally a value.\n"
+                "⚠️  Invalid format. Check that the arguments are entered correctly.\n"
             )
+        except IndexError:
+            return "⚠️  Insufficient arguments. Enter a command, name, and optionally a value.\n"
         except KeyError:
             return "ℹ️  Contact not found.\n"
         except PhoneValidationError as e:
@@ -77,13 +73,12 @@ def input_error(func):
         except Exception as e:
             return f"⚠️  Raised other error: {e}"
 
-    return inner
+    return wrapper
 
 
 def save_data(book, filename="addressbook.pkl"):
     with open(filename, "wb") as f:
         pickle.dump(book, f)
-
 
 
 def load_data(filename="addressbook.pkl"):
@@ -133,7 +128,6 @@ def normalize_note_text(raw: str) -> str:
     while len(t) >= 2 and t[0] == t[-1] and t[0] in ("'", '"'):
         t = t[1:-1].strip()
     return t
-
 
 
 class Field:
@@ -256,8 +250,8 @@ class Record:
         phone_obj.value = new
         return f"✅ Phone {old} updated to {new}.\n"
 
-    def remove_phone(self, phone):
-        phone_obj = next((p for p in self.phones if p.value == phone), None)
+    def remove_phone(self, phone_number):
+        phone_obj = next((p for p in self.phones if p.value == phone_number), None)
         if phone_obj:
             self.phones.remove(phone_obj)
             return f"✅ Phone {phone_number} deleted for contact {self.name.value}.\n"
@@ -341,13 +335,14 @@ class Record:
 
     def __str__(self):
         phones_str = "; ".join(p.value for p in self.phones)
-        birthday_str = f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
+        birthday_str = (
+            f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
+        )
         notes_str = f", notes: {len(self.notes)}" if self.notes else ""
         # return f" {LIGHT_GRAY}Contact name:{RESET} {self.name.value}, {LIGHT_GRAY}phones:{RESET} {phones_str}{birthday_str}{notes_str}"
-        #return f" Contact name: {YELLOW}{self.name.value}{RESET}, phones: {CYAN}{phones_str}{RESET}{birthday_str}"
+        # return f" Contact name: {YELLOW}{self.name.value}{RESET}, phones: {CYAN}{phones_str}{RESET}{birthday_str}"
         name_fixed = self.name.value.ljust(12)
         return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}"
-
 
 
 class AddressBook(UserDict):
@@ -436,16 +431,17 @@ class AddressBook(UserDict):
     def get_upcoming_birthdays(self):
         upcoming_birthdays = []
         today = datetime.now().date()
-        end_date = today + timedelta(days=days)
-        result = []
+        next_week = today + timedelta(days=7)
 
         for record in self.data.values():
-            if not record.birthday:
+            if record.birthday is None:
                 continue
 
-            bday_this_year = record.birthday.value.replace(year=today.year)
+            bday_date = record.birthday.value
+            bday_this_year = bday_date.replace(year=today.year)
+
             if bday_this_year < today:
-                bday_this_year = bday_this_year.replace(year=today.year + 1)
+                bday_this_year = bday_date.replace(year=today.year + 1)
 
             if today <= bday_this_year <= next_week:
                 if bday_this_year.weekday() >= 5:
@@ -458,6 +454,7 @@ class AddressBook(UserDict):
                         "congratulation_date": bday_this_year.strftime("%d.%m.%Y"),
                     }
                 )
+
         return upcoming_birthdays
 
 
@@ -488,6 +485,8 @@ def add_address(args, book):
     record = book.find(name)
     if not record:
         raise KeyError
+    old_phone = None # TODO implement this
+    new_phone = None # TODO implement this
     return record.edit_phone(old_phone, new_phone)
 
 
@@ -505,7 +504,6 @@ def show_phone(args, book: AddressBook):
     return f"Numbers for {name}: {GREEN}{phones_str}{RESET}\n"
 
 
-
 @input_error
 def show_all(book):
     if not book.data:
@@ -517,11 +515,18 @@ def show_all(book):
 
     return result
 
+@input_error
+def change_contact():
+   pass # TODO implement change contact
+
+@input_error
+def delete_contact():
+    pass # TODO implement delete contact
 
 
 @input_error
 def add_birthday(args, book):
-    name, bday = args
+    name, birthday = args
     record = book.find(name)
     if not record:
         raise KeyError
@@ -540,7 +545,6 @@ def show_birthday(args, book: AddressBook):
         return f"Birthday for {name}: {GREEN}{record.birthday}{RESET}\n"
     else:
         return f"ℹ️  The birthday is not set for contact {name}.\n"
-
 
 
 @input_error
@@ -775,7 +779,6 @@ def find_tags_cmd(args, book: AddressBook):
             f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
         )
     return "\n".join(lines)
-
 
 
 @input_error
@@ -1049,9 +1052,15 @@ def main():
         "find-tags": find_tags_cmd,
     }
 
+    # Create a completer with available commands and common words
+    command_completer = WordCompleter(
+        list(commands.keys()) + ["hello", "exit", "close"],
+        ignore_case=True
+    )
+
     while True:
         try:
-            user_input = prompt("Enter a command: ", completer=completer)
+            user_input = prompt("Enter a command: ", completer=command_completer)
         except (KeyboardInterrupt, EOFError):
             save_data(book)
             print("Good bye! Data saved.\n")
@@ -1080,7 +1089,7 @@ def main():
                 print(commands[command](args, book))
             continue
 
-        guessed = guess_command(command, all_commands)
+        guessed = command # TODO guess command
         if guessed:
             print(f"Did you mean '{guessed}'?")
             if guessed in ["all", "birthdays"]:
