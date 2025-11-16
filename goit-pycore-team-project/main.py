@@ -3,6 +3,28 @@ from datetime import datetime, timedelta
 import re
 import pickle
 
+BLACK = '\033[30m'
+RED = '\033[31m'
+GREEN = '\033[92m'
+YELLOW = '\033[33m'
+BLUE = '\033[94m'
+MAGENTA = '\033[95m'
+CYAN = '\033[96m'
+WHITE = '\033[37m'
+LIGHT_GRAY = '\x1b[38;5;248m'
+RESET = '\033[0m'
+
+BLACK_BG = '\033[40m'
+RED_BG = '\033[41m'
+GREEN_BG = '\033[42m'
+YELLOW_BG = '\033[43m'
+BLUE_BG = '\033[44m'
+MAGENTA_BG = '\033[45m'
+CYAN_BG = '\033[46m'
+WHITE_BG = '\033[47m'
+LIGHT_GRAY_BG = '\033[100m'
+RESET_BG = '\033[0m'
+
 
 class ContactError(Exception):
     pass
@@ -29,13 +51,13 @@ def input_error(func):
         try:
             return func(*args, **kwargs)
         except ValueError:
-            return "Invalid format. Check that the arguments are entered correctly."
+            return "⚠️  Invalid format. Check that the arguments are entered correctly.\n"
         except IndexError:
             return (
-                "Insufficient arguments. Enter a command, name, and optionally a value."
+                "⚠️  Insufficient arguments. Enter a command, name, and optionally a value.\n"
             )
         except KeyError:
-            return "Contact not found."
+            return "ℹ️  Contact not found.\n"
         except PhoneValidationError as e:
             return str(e)
         except DateValidationError as e:
@@ -45,7 +67,7 @@ def input_error(func):
         except NoteNotFoundError as e:
             return str(e)
         except Exception as e:
-            return f"Raised other error: {e}"
+            return f"⚠️  Raised other error: {e}"
 
     return inner
 
@@ -106,7 +128,7 @@ def normalize_note_text(raw: str) -> str:
 
 class Field:
     def __init__(self, value):
-        self._value = value
+        self.value = value
 
     @property
     def value(self):
@@ -125,20 +147,13 @@ class Name(Field):
 
 
 class Phone(Field):
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
+    @Field.value.setter
     def value(self, new_value):
         if not re.fullmatch(r"^\d{10}$", new_value):
             raise PhoneValidationError(
-                "The phone number must consist of exactly 10 digits."
+                "ℹ️  The phone number must consist of exactly 10 digits.\n"
             )
         self._value = new_value
-
-    def __init__(self, value):
-        self.value = value
 
 
 class Birthday(Field):
@@ -147,7 +162,7 @@ class Birthday(Field):
             date_obj = datetime.strptime(value, "%d.%m.%Y").date()
             self._value = date_obj
         except ValueError:
-            raise DateValidationError("Invalid date format. Use DD.MM.YYYY")
+            raise DateValidationError("⚠️  Invalid date format. Use DD.MM.YYYY\n")
 
     @property
     def value(self):
@@ -209,7 +224,7 @@ class Record:
     def add_birthday(self, birthday: str):
         try:
             self.birthday = Birthday(birthday)
-            return f"Birthday {birthday} added for contact {self.name.value}."
+            return f"✅ Birthday {birthday} added for contact {self.name.value}.\n"
         except DateValidationError as e:
             return str(e)
 
@@ -218,9 +233,9 @@ class Record:
             phone = Phone(phone_number)
             if phone.value not in [p.value for p in self.phones]:
                 self.phones.append(phone)
-                return f"Phone {phone_number} added to contact {self.name.value}."
+                return f"✅ Phone {phone_number} added to contact {self.name.value}.\n"
             else:
-                return f"The number {phone_number} already exists for contact {self.name.value}."
+                return f"ℹ️  The number {phone_number} already exists for contact {self.name.value}.\n"
         except PhoneValidationError as e:
             return str(e)
 
@@ -234,11 +249,11 @@ class Record:
         phone_obj = self.find_phone(old_phone)
 
         if phone_obj is None:
-            return f"Error: Number {old_phone} not found for contact {self.name.value}."
+            return f"⚠️  Error: Number {old_phone} not found for contact {self.name.value}.\n"
 
         try:
             phone_obj.value = new_phone
-            return f"Phone {old_phone} successfully updated to {new_phone}."
+            return f"✅ Phone {old_phone} successfully updated to {new_phone}.\n"
         except PhoneValidationError as e:
             return str(e)
 
@@ -246,7 +261,7 @@ class Record:
         phone_obj = self.find_phone(phone_number)
         if phone_obj:
             self.phones.remove(phone_obj)
-            return f"Phone {phone_number} deleted for contact {self.name.value}."
+            return f"✅ Phone {phone_number} deleted for contact {self.name.value}.\n"
         else:
             return (
                 f"Error: Number {phone_number} not found for contact {self.name.value}."
@@ -327,15 +342,19 @@ class Record:
 
     def __str__(self):
         phones_str = "; ".join(p.value for p in self.phones)
-        birthday_str = f", birthday: {self.birthday}" if self.birthday else ""
+        birthday_str = f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
         notes_str = f", notes: {len(self.notes)}" if self.notes else ""
-        return f"Contact name: {self.name.value}, phones: {phones_str}{birthday_str}{notes_str}"
+        # return f" {LIGHT_GRAY}Contact name:{RESET} {self.name.value}, {LIGHT_GRAY}phones:{RESET} {phones_str}{birthday_str}{notes_str}"
+        #return f" Contact name: {YELLOW}{self.name.value}{RESET}, phones: {CYAN}{phones_str}{RESET}{birthday_str}"
+        name_fixed = self.name.value.ljust(12)
+        return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}"
+
 
 
 class AddressBook(UserDict):
     def add_record(self, record: Record):
         self.data[record.name.value] = record
-        return f"Record for contact {record.name.value} added."
+        return f"✅ Record for contact {record.name.value} added.\n"
 
     def find(self, name: str) -> Record | None:
         return self.data.get(name)
@@ -343,9 +362,43 @@ class AddressBook(UserDict):
     def delete(self, name: str):
         if name in self.data:
             del self.data[name]
-            return f"Record for contact {name} deleted."
+            return f"✅ Record for contact {name} deleted.\n"
         else:
-            raise RecordNotFoundError(f"Record with name {name} not found.")
+            raise RecordNotFoundError(f"ℹ️  Record with name {name} not found.\n")
+
+    def search_notes_global(self, query: str):
+        q = query.strip()
+        if not q:
+            return []
+        results = []
+        for record in self.data.values():
+            for note in record.search_notes(q):
+                results.append(
+                    {"name": record.name.value, "note_id": note.id, "text": note.text}
+                )
+        return results
+
+    def search_notes_by_tags_global(self, tags: list[str], match_all: bool = True):
+        query_tags = normalize_tags(tags)
+        if not query_tags:
+            return []
+        results = []
+        for record in self.data.values():
+            matches = record.search_notes_by_tags(query_tags, match_all=match_all)
+            for note, match_count in matches:
+                ensure_note_has_tags(note)
+                results.append(
+                    {
+                        "name": record.name.value,
+                        "note_id": note.id,
+                        "text": note.text,
+                        "tags": list(note.tags),
+                        "matches": match_count,
+                    }
+                )
+
+        results.sort(key=lambda x: (-x["matches"], x["name"].lower(), x["note_id"]))
+        return results
 
     def search_notes_global(self, query: str):
         q = query.strip()
@@ -407,7 +460,6 @@ class AddressBook(UserDict):
                         "congratulation_date": bday_this_year.strftime("%d.%m.%Y"),
                     }
                 )
-
         return upcoming_birthdays
 
 
@@ -450,21 +502,24 @@ def show_phone(args, book: AddressBook):
         raise KeyError
 
     if not record.phones:
-        return f"Contact {name} has no phone numbers."
+        return f"ℹ️  Contact {name} has no phone numbers.\n"
 
     phones_str = "; ".join([p.value for p in record.phones])
-    return f"Numbers for {name}: {phones_str}"
+    return f"Numbers for {name}: {GREEN}{phones_str}{RESET}\n"
+
 
 
 @input_error
 def show_all(book: AddressBook):
     if not book.data:
-        return "The address book is empty."
+        return "ℹ️  The address book is empty.\n"
 
-    result = "All contacts:\n"
+    result = f"\n{LIGHT_GRAY_BG} All contacts: {RESET_BG}\n"
     for record in book.data.values():
         result += str(record) + "\n"
-    return result.strip()
+
+    return result
+
 
 
 @input_error
@@ -485,20 +540,245 @@ def show_birthday(args, book: AddressBook):
         raise KeyError
 
     if record.birthday:
-        return f"Birthday for {name}: {record.birthday}"
+        return f"Birthday for {name}: {GREEN}{record.birthday}{RESET}\n"
     else:
-        return f"The birthday is not set for contact {name}."
+        return f"ℹ️  The birthday is not set for contact {name}.\n"
+
 
 
 @input_error
 def upcoming_birthdays(book: AddressBook):
     upcoming = book.get_upcoming_birthdays()
     if not upcoming:
-        return "There are no birthdays next week."
-    output = "Upcoming birthdays:\n"
+        return "ℹ️  There are no birthdays next week.\n"
+    output = f"\n{LIGHT_GRAY_BG} Upcoming birthdays: {RESET_BG}\n"
     for item in upcoming:
-        output += f"- {item['name']} needs to be congratulated on: {item['congratulation_date']}\n"
-    return output.strip()
+        output += f" {item['name']} needs to be congratulated on: {GREEN}{item['congratulation_date']}{RESET}\n"
+    return output.strip() + "\n"
+
+
+@input_error
+def add_note_cmd(args, book: AddressBook):
+    if len(args) < 2:
+        return "Usage: add-note <name> <note text> [tags: <tag1,tag2,...>]"
+    name = args[0]
+    if "tags:" in args:
+        tags_index = args.index("tags:")
+        text_tokens = args[1:tags_index]
+        tag_tokens = args[tags_index + 1 :]
+        text = " ".join(text_tokens).strip()
+        tags = normalize_tags(tag_tokens) if tag_tokens else []
+    else:
+        text = " ".join(args[1:]).strip()
+        tags = []
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    return record.add_note(text, tags)
+
+
+@input_error
+def list_notes_cmd(args, book: AddressBook):
+    if len(args) < 1:
+        return "Usage: list-notes <name> [--sort tags]"
+    name = args[0]
+    sort_by_tags = False
+    if len(args) >= 3 and args[1] in ("--sort", "-s") and args[2] == "tags":
+        sort_by_tags = True
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    if not record.notes:
+        return f"No notes for contact {name}."
+    notes = record.list_notes_sorted_by_tags() if sort_by_tags else record.list_notes()
+    lines = [f"Notes for {name}:"]
+    for n in notes:
+        ensure_note_has_tags(n)
+        tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
+        lines.append(f"- [{n.id}] {n.text}{tag_suffix}")
+    return "\n".join(lines)
+
+
+@input_error
+def search_notes_cmd(args, book: AddressBook):
+    if len(args) < 2:
+        return "Usage: search-notes <name> <query>"
+    name = args[0]
+    query = " ".join(args[1:])
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    found = record.search_notes(query)
+    if not found:
+        return f"No notes matched '{query}' for contact {name}."
+    lines = [f"Found notes for {name} (query: '{query}'):"]
+    for n in found:
+        ensure_note_has_tags(n)
+        tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
+        lines.append(f"- [{n.id}] {n.text}{tag_suffix}")
+    return "\n".join(lines)
+
+
+@input_error
+def edit_note_cmd(args, book: AddressBook):
+    if len(args) < 3:
+        return "Usage: edit-note <name> <note_id> <new text>"
+    name = args[0]
+    try:
+        note_id = int(args[1])
+    except ValueError:
+        return "note_id must be an integer."
+    new_text = " ".join(args[2:])
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    return record.edit_note(note_id, new_text)
+
+
+@input_error
+def delete_note_cmd(args, book: AddressBook):
+    name, note_id_str = args
+    try:
+        note_id = int(note_id_str)
+    except ValueError:
+        return "note_id must be an integer."
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    return record.delete_note(note_id)
+
+
+@input_error
+def find_notes_cmd(args, book: AddressBook):
+    if not args:
+        return "Usage: find-notes <query>"
+    query = " ".join(args)
+    results = book.search_notes_global(query)
+    if not results:
+        return f"No notes matched '{query}'."
+    lines = [f"Global notes search (query: '{query}'):"]
+    for item in results:
+        lines.append(f"- {item['name']} [{item['note_id']}]: {item['text']}")
+    return "\n".join(lines)
+
+
+@input_error
+def add_tags_cmd(args, book: AddressBook):
+    if len(args) < 3:
+        return "Usage: add-tags <name> <note_id> <tag1> [tag2 ...]"
+    name = args[0]
+    try:
+        note_id = int(args[1])
+    except ValueError:
+        return "note_id must be an integer."
+    tags = normalize_tags(args[2:])
+    if not tags:
+        return "Provide at least one tag."
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    note = record.find_note(note_id)
+    if note is None:
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
+    note.add_tags(tags)
+    return f"Tags added to note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
+
+
+@input_error
+def remove_tags_cmd(args, book: AddressBook):
+    if len(args) < 3:
+        return "Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"
+    name = args[0]
+    try:
+        note_id = int(args[1])
+    except ValueError:
+        return "note_id must be an integer."
+    tags = normalize_tags(args[2:])
+    if not tags:
+        return "Provide at least one tag."
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    note = record.find_note(note_id)
+    if note is None:
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
+    note.remove_tags(tags)
+    return f"Tags removed from note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
+
+
+@input_error
+def clear_tags_cmd(args, book: AddressBook):
+    name, note_id_str = args
+    try:
+        note_id = int(note_id_str)
+    except ValueError:
+        return "note_id must be an integer."
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    note = record.find_note(note_id)
+    if note is None:
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
+    note.clear_tags()
+    return f"All tags cleared for note [{note_id}] of contact {name}."
+
+
+@input_error
+def search_tags_cmd(args, book: AddressBook):
+    if len(args) < 2:
+        return "Usage: search-tags <name> <tag1> [tag2 ...] [--any]"
+    name = args[0]
+    match_all = True
+    tags_tokens = args[1:]
+    if "--any" in tags_tokens:
+        match_all = False
+        tags_tokens = [t for t in tags_tokens if t != "--any"]
+    tags = normalize_tags(tags_tokens)
+    if not tags:
+        return "Provide at least one tag."
+    record = book.find(name)
+    if record is None:
+        raise KeyError
+    found = record.search_notes_by_tags(tags, match_all=match_all)
+    if not found:
+        return f"No notes matched tags for contact {name}."
+    criterion = "all" if match_all else "any"
+    lines = [
+        f"Notes for {name} matching {criterion} of tags: {', '.join('#' + t for t in tags)}"
+    ]
+    for note, match_count in found:
+        ensure_note_has_tags(note)
+        tag_suffix = f" [#{', #'.join(note.tags)}]" if note.tags else ""
+        lines.append(f"- [{note.id}] {note.text}{tag_suffix} (matches: {match_count})")
+    return "\n".join(lines)
+
+
+@input_error
+def find_tags_cmd(args, book: AddressBook):
+    if not args:
+        return "Usage: find-tags <tag1> [tag2 ...] [--any]"
+    match_all = True
+    tags_tokens = list(args)
+    if "--any" in tags_tokens:
+        match_all = False
+        tags_tokens = [t for t in tags_tokens if t != "--any"]
+    tags = normalize_tags(tags_tokens)
+    if not tags:
+        return "Provide at least one tag."
+    results = book.search_notes_by_tags_global(tags, match_all=match_all)
+    if not results:
+        return "No notes matched the given tags."
+    criterion = "all" if match_all else "any"
+    lines = [
+        f"Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}"
+    ]
+    for item in results:
+        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get("tags") else ""
+        lines.append(
+            f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
+        )
+    return "\n".join(lines)
+
 
 
 @input_error
@@ -726,7 +1006,30 @@ def find_tags_cmd(args, book: AddressBook):
 
 def main():
     book = load_data()
-    print("Welcome to the assistant bot!")
+    print("\n👋 Welcome to the assistant bot!")
+    print(f"""
+ /$$$$$$$$                  /$$              /$$$$$$$$                               
+|__  $$__/                 | $$             |__  $$__/                               
+   | $$ /$$   /$$  /$$$$$$ | $$$$$$$   /$$$$$$ | $$  /$$$$$$   /$$$$$$  /$$$$$$/$$$$ 
+   | $$| $$  | $$ /$$__  $$| $$__  $$ /$$__  $$| $$ /$$__  $$ /$$__  $$| $$_  $$_  $$
+   | $$| $$  | $$| $$  \ _/| $$  \ $$| $$  \ $$| $$| $$$$$$$$| $$$$$$$$| $$ \ $$ \ $$
+   | $$| $$  | $$| $$      | $$  | $$| $$  | $$| $$| $$_____/| $$_____/| $$ | $$ | $$
+   | $$|  $$$$$$/| $$      | $$$$$$$/|  $$$$$$/| $$|  $$$$$$$|  $$$$$$$| $$ | $$ | $$
+   |__/ \ _____/ |__/      |_______/  \ _____/ |__/ \ ______/ \ ______/|__/ |__/ |__/                                                                                                                                                                                
+
+{GREEN_BG} Available commands! Please use one of the following: {RESET}
+
+{GREEN}hello{RESET}                               - Greet the assistant
+{GREEN}add {CYAN}[name] [phone]{RESET}                  - Add a contact
+{GREEN}change {CYAN}[name] [old_num] [new_num]{RESET}   - Change a contact's phone
+{GREEN}phone {CYAN}[name]{RESET}                        - Show phones of a contact
+{GREEN}add-email {CYAN}[name] [email]{RESET}            - Add an email to contact
+{GREEN}all{RESET}                                 - Show all contacts
+{GREEN}add-birthday {CYAN}[name] [dd.mm.yyyy]{RESET}    - Add a birthday to a contact
+{GREEN}show-birthday {CYAN}[name]{RESET}                - Show the birthday of a contact
+{GREEN}birthdays{RESET}                           - Show upcoming birthdays in the next week
+{GREEN}close{RESET} / {GREEN}exit{RESET}                        - Save and exit
+    """)
 
     commands = {
         "add": add_contact,
@@ -750,48 +1053,34 @@ def main():
     }
 
     while True:
-        user_input = input("Enter a command: ")
+        user_input = input(f"{MAGENTA}\x1b[4mEnter a command\x1b[24m:{RESET} ")
         command, args = parse_input(user_input)
 
         if command in ["close", "exit"]:
             save_data(book)
-            print("Good bye! Data saved.")
+            print("Good bye! Data saved.\n")
             break
 
         elif command == "hello":
             print("How can I help you?")
 
         elif command in commands:
-            if command == "all" or command == "birthdays":
+            if command == "all":
                 print(commands[command](book))
+            elif command == "birthdays":
+                print()
+                print(commands[command]([], book))
             else:
                 print(commands[command](args, book))
 
         else:
             print(
-                "Invalid command. Available commands:\n"
-                "hello - greeting\n"
-                "add <name> <phone> - add contact or phone\n"
-                "change <name> <old_phone> <new_phone> - change phone\n"
-                "phone <name> - show phones\n"
-                "all - show all contacts\n"
-                "add-birthday <name> <DD.MM.YYYY> - add birthday\n"
-                "show-birthday <name> - show birthday\n"
-                "birthdays - show upcoming birthdays\n"
-                "add-note <name> <text> [tags: <t1,t2,...>] - add note\n"
-                "list-notes <name> [--sort tags] - list contact notes\n"
-                "search-notes <name> <query> - search contact notes\n"
-                "edit-note <name> <note_id> <new text> - edit note\n"
-                "delete-note <name> <note_id> - delete note\n"
-                "find-notes <query> - global notes search\n"
-                "add-tags <name> <note_id> <tag1> [tag2 ...] - add tags to note\n"
-                "remove-tags <name> <note_id> <tag1> [tag2 ...] - remove tags from note\n"
-                "clear-tags <name> <note_id> - clear note tags\n"
-                "search-tags <name> <tag1> [tag2 ...] [--any] - search notes by tags\n"
-                "find-tags <tag1> [tag2 ...] [--any] - global search by tags\n"
-                "close | exit - save and quit"
+                "Invalid command. Use hello for greeting, "
+                "add to add contact, change to change contact, "
+                "phone to show phone, all to show all contacts, "
+                "add-birthday to add birthday, show-birthday to show birthday, "
+                "birthdays to show upcoming birthdays."
             )
-
 
 if __name__ == "__main__":
     main()
