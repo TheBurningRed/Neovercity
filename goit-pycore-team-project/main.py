@@ -1,7 +1,12 @@
+import pickle
+import re
 from collections import UserDict
 from datetime import datetime, timedelta
-import re
-import pickle
+from difflib import get_close_matches
+
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import Completer, Completion
+
 
 BLACK = '\033[30m'
 RED = '\033[31m'
@@ -30,12 +35,15 @@ class ContactError(Exception):
     pass
 
 
+
 class PhoneValidationError(ContactError):
     pass
 
 
+
 class DateValidationError(ContactError):
     pass
+
 
 
 class RecordNotFoundError(ContactError):
@@ -47,7 +55,7 @@ class NoteNotFoundError(ContactError):
 
 
 def input_error(func):
-    def inner(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except ValueError:
@@ -75,6 +83,7 @@ def input_error(func):
 def save_data(book, filename="addressbook.pkl"):
     with open(filename, "wb") as f:
         pickle.dump(book, f)
+
 
 
 def load_data(filename="addressbook.pkl"):
@@ -126,6 +135,7 @@ def normalize_note_text(raw: str) -> str:
     return t
 
 
+
 class Field:
     def __init__(self, value):
         self.value = value
@@ -159,8 +169,7 @@ class Phone(Field):
 class Birthday(Field):
     def __init__(self, value):
         try:
-            date_obj = datetime.strptime(value, "%d.%m.%Y").date()
-            self._value = date_obj
+            self._value = datetime.strptime(value, "%d.%m.%Y").date()
         except ValueError:
             raise DateValidationError("⚠️  Invalid date format. Use DD.MM.YYYY\n")
 
@@ -214,9 +223,10 @@ class Note:
 
 
 class Record:
-    def __init__(self, name: str):
+    def __init__(self, name):
         self.name = Name(name)
         self.phones = []
+        self.addresses = []
         self.birthday = None
         self.notes: list[Note] = []
         self.next_note_id = 1
@@ -239,26 +249,15 @@ class Record:
         except PhoneValidationError as e:
             return str(e)
 
-    def find_phone(self, phone_number: str) -> Phone | None:
-        for p in self.phones:
-            if p.value == phone_number:
-                return p
-        return None
+    def edit_phone(self, old, new):
+        phone_obj = next((p for p in self.phones if p.value == old), None)
+        if not phone_obj:
+            return f"⚠️  Phone {old} not found for {self.name.value}.\n"
+        phone_obj.value = new
+        return f"✅ Phone {old} updated to {new}.\n"
 
-    def edit_phone(self, old_phone: str, new_phone: str):
-        phone_obj = self.find_phone(old_phone)
-
-        if phone_obj is None:
-            return f"⚠️  Error: Number {old_phone} not found for contact {self.name.value}.\n"
-
-        try:
-            phone_obj.value = new_phone
-            return f"✅ Phone {old_phone} successfully updated to {new_phone}.\n"
-        except PhoneValidationError as e:
-            return str(e)
-
-    def remove_phone(self, phone_number: str):
-        phone_obj = self.find_phone(phone_number)
+    def remove_phone(self, phone):
+        phone_obj = next((p for p in self.phones if p.value == phone), None)
         if phone_obj:
             self.phones.remove(phone_obj)
             return f"✅ Phone {phone_number} deleted for contact {self.name.value}.\n"
@@ -352,14 +351,14 @@ class Record:
 
 
 class AddressBook(UserDict):
-    def add_record(self, record: Record):
+    def add_record(self, record):
         self.data[record.name.value] = record
         return f"✅ Record for contact {record.name.value} added.\n"
 
-    def find(self, name: str) -> Record | None:
+    def find(self, name):
         return self.data.get(name)
 
-    def delete(self, name: str):
+    def delete(self, name):
         if name in self.data:
             del self.data[name]
             return f"✅ Record for contact {name} deleted.\n"
@@ -437,17 +436,16 @@ class AddressBook(UserDict):
     def get_upcoming_birthdays(self):
         upcoming_birthdays = []
         today = datetime.now().date()
-        next_week = today + timedelta(days=7)
+        end_date = today + timedelta(days=days)
+        result = []
 
         for record in self.data.values():
-            if record.birthday is None:
+            if not record.birthday:
                 continue
 
-            bday_date = record.birthday.value
-            bday_this_year = bday_date.replace(year=today.year)
-
+            bday_this_year = record.birthday.value.replace(year=today.year)
             if bday_this_year < today:
-                bday_this_year = bday_date.replace(year=today.year + 1)
+                bday_this_year = bday_this_year.replace(year=today.year + 1)
 
             if today <= bday_this_year <= next_week:
                 if bday_this_year.weekday() >= 5:
@@ -473,10 +471,9 @@ def parse_input(user_input):
 
 
 @input_error
-def add_contact(args, book: AddressBook):
+def add_contact(args, book):
     name, phone = args
     record = book.find(name)
-
     if record:
         return record.add_phone(phone)
     else:
@@ -486,10 +483,10 @@ def add_contact(args, book: AddressBook):
 
 
 @input_error
-def change_contact(args, book: AddressBook):
-    name, old_phone, new_phone = args
+def add_address(args, book):
+    name, addr = args
     record = book.find(name)
-    if record is None:
+    if not record:
         raise KeyError
     return record.edit_phone(old_phone, new_phone)
 
@@ -498,7 +495,7 @@ def change_contact(args, book: AddressBook):
 def show_phone(args, book: AddressBook):
     (name,) = args
     record = book.find(name)
-    if record is None:
+    if not record:
         raise KeyError
 
     if not record.phones:
@@ -510,7 +507,7 @@ def show_phone(args, book: AddressBook):
 
 
 @input_error
-def show_all(book: AddressBook):
+def show_all(book):
     if not book.data:
         return "ℹ️  The address book is empty.\n"
 
@@ -523,10 +520,10 @@ def show_all(book: AddressBook):
 
 
 @input_error
-def add_birthday(args, book: AddressBook):
-    name, birthday = args
+def add_birthday(args, book):
+    name, bday = args
     record = book.find(name)
-    if record is None:
+    if not record:
         raise KeyError
 
     return record.add_birthday(birthday)
@@ -536,7 +533,7 @@ def add_birthday(args, book: AddressBook):
 def show_birthday(args, book: AddressBook):
     (name,) = args
     record = book.find(name)
-    if record is None:
+    if not record:
         raise KeyError
 
     if record.birthday:
@@ -1033,11 +1030,11 @@ def main():
 
     commands = {
         "add": add_contact,
+        "add-address": add_address,
         "change": change_contact,
-        "phone": show_phone,
+        "delete": delete_contact,
         "all": show_all,
-        "add-birthday": add_birthday,
-        "show-birthday": show_birthday,
+        "birthday": add_birthday,
         "birthdays": upcoming_birthdays,
         "add-note": add_note_cmd,
         "list-notes": list_notes_cmd,
@@ -1053,17 +1050,26 @@ def main():
     }
 
     while True:
-        user_input = input(f"{MAGENTA}\x1b[4mEnter a command\x1b[24m:{RESET} ")
-        command, args = parse_input(user_input)
-
-        if command in ["close", "exit"]:
+        try:
+            user_input = prompt("Enter a command: ", completer=completer)
+        except (KeyboardInterrupt, EOFError):
             save_data(book)
             print("Good bye! Data saved.\n")
             break
 
+        if not user_input.strip():
+            continue
+
+        command, *args = user_input.strip().split()
+        command = command.lower()
+
+        if command in ["exit", "close"]:
+            save_data(book)
+            print("Work completed. Data saved. Bye!")
+            break
         elif command == "hello":
             print("How can I help you?")
-
+            continue
         elif command in commands:
             if command == "all":
                 print(commands[command](book))
@@ -1072,7 +1078,21 @@ def main():
                 print(commands[command]([], book))
             else:
                 print(commands[command](args, book))
+            continue
 
+        guessed = guess_command(command, all_commands)
+        if guessed:
+            print(f"Did you mean '{guessed}'?")
+            if guessed in ["all", "birthdays"]:
+                print(commands[guessed](args=[], book=book))
+            elif guessed in commands:
+                print(commands[guessed](args, book))
+            elif guessed == "hello":
+                print("How can I help you?")
+            elif guessed in ["exit", "close"]:
+                save_data(book)
+                print("Work completed. Data saved. Bye!")
+                break
         else:
             print(
                 "Invalid command. Use hello for greeting, "
