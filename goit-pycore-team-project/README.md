@@ -18,7 +18,7 @@
  - Email 
  - та днями народження до книги контактів!
 
-![merch_man_turbo_teem.png](assets/merch_man_turbo_teem.png)
+![merch_man_turbo_teem.webp](assets/merch_man_turbo_teem.webp)
 
 ---
 
@@ -26,7 +26,7 @@
 
 у яких день народження через задану кількість днів від поточної дати
 
-![merch_woomen.webp](assets/merch_woomen.webp)
+![merch_woomen.png](assets/merch_woomen.png)
 
 --- 
 
