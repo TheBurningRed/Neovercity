@@ -1075,29 +1075,12 @@ def main():
 
         else:
             print(
-                "Invalid command. Available commands:\n"
-                "hello - greeting\n"
-                "add <name> <phone> - add contact or phone\n"
-                "change <name> <old_phone> <new_phone> - change phone\n"
-                "phone <name> - show phones\n"
-                "all - show all contacts\n"
-                "add-birthday <name> <DD.MM.YYYY> - add birthday\n"
-                "show-birthday <name> - show birthday\n"
-                "birthdays - show upcoming birthdays\n"
-                "add-note <name> <text> [tags: <t1,t2,...>] - add note\n"
-                "list-notes <name> [--sort tags] - list contact notes\n"
-                "search-notes <name> <query> - search contact notes\n"
-                "edit-note <name> <note_id> <new text> - edit note\n"
-                "delete-note <name> <note_id> - delete note\n"
-                "find-notes <query> - global notes search\n"
-                "add-tags <name> <note_id> <tag1> [tag2 ...] - add tags to note\n"
-                "remove-tags <name> <note_id> <tag1> [tag2 ...] - remove tags from note\n"
-                "clear-tags <name> <note_id> - clear note tags\n"
-                "search-tags <name> <tag1> [tag2 ...] [--any] - search notes by tags\n"
-                "find-tags <tag1> [tag2 ...] [--any] - global search by tags\n"
-                "close | exit - save and quit"
+                "Invalid command. Use hello for greeting, "
+                "add to add contact, change to change contact, "
+                "phone to show phone, all to show all contacts, "
+                "add-birthday to add birthday, show-birthday to show birthday, "
+                "birthdays to show upcoming birthdays."
             )
-
 
 if __name__ == "__main__":
     main()
