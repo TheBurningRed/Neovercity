@@ -8,6 +8,7 @@ class ContactError(Exception):
     pass
 
 
+# LOL
 class PhoneValidationError(ContactError):
     pass
 
