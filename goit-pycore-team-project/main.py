@@ -50,6 +50,9 @@ class ContactError(Exception):
 class PhoneValidationError(ContactError):
     pass
 
+class AddressValidationError(ContactError):
+    pass
+
 
 class EmailValidationError(ContactError):
     pass
@@ -186,6 +189,14 @@ class Phone(Field):
             )
         self._value = new_value
 
+class Address(Field):
+    @Field.value.setter
+    def value(self, new_value):
+        if not re.fullmatch(r".{5,}", new_value):
+            raise AddressValidationError(
+                "ℹ️  The address is invalid. Minimum 5 characters is required\n"
+            )
+        self._value = new_value
 
 class Birthday(Field):
     def __init__(self, value):
@@ -269,6 +280,17 @@ class Record:
             else:
                 return f"ℹ️  The number {phone_number} already exists for contact {self.name.value}.\n"
         except PhoneValidationError as e:
+            return str(e)
+
+    def add_address(self, address: str):
+        try:
+            phone = Address(address)
+            if phone.value not in [p.value for p in self.phones]:
+                self.addresses.append(address)
+                return f"✅ Address {address} added to contact {self.name.value}.\n"
+            else:
+                return f"ℹ️  The address {address} already exists for contact {self.name.value}.\n"
+        except AddressValidationError as e:
             return str(e)
 
     def edit_phone(self, old, new):
@@ -366,10 +388,11 @@ class Record:
         birthday_str = (
             f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
         )
-        notes_str = f", notes: {len(self.notes)}" if self.notes else ""
+        notes_str = f", Notes: {len(self.notes)}" if self.notes else ""
+        address_str = f", Addresses: {self.addresses[0]}" if self.addresses else ""
 
         name_fixed = self.name.value.ljust(12)
-        return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}"
+        return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}{address_str}{notes_str}"
 
 
 class AddressBook(UserDict):
