@@ -2,8 +2,22 @@ import pickle
 import re
 from collections import UserDict
 from datetime import datetime, timedelta
-from prompt_toolkit import prompt
-from prompt_toolkit.completion import WordCompleter
+from difflib import get_close_matches
+
+try:
+    from prompt_toolkit import prompt as pt_prompt
+    from prompt_toolkit.completion import WordCompleter
+
+    HAVE_PT = True
+except Exception:
+    HAVE_PT = False
+
+    def pt_prompt(message, **kwargs):
+        return input(message)
+
+    class WordCompleter:
+        def __init__(self, words, ignore_case=False):
+            self.words = words
 
 
 BLACK = "\033[30m"
@@ -164,8 +178,7 @@ class Birthday(Field):
         try:
             self._value = datetime.strptime(value, "%d.%m.%Y").date()
         except ValueError:
-            raise DateValidationError(
-                "⚠️  Invalid date format. Use DD.MM.YYYY\n")
+            raise DateValidationError("⚠️  Invalid date format. Use DD.MM.YYYY\n")
 
     @property
     def value(self):
@@ -251,8 +264,7 @@ class Record:
         return f"✅ Phone {old} updated to {new}.\n"
 
     def remove_phone(self, phone_number):
-        phone_obj = next(
-            (p for p in self.phones if p.value == phone_number), None)
+        phone_obj = next((p for p in self.phones if p.value == phone_number), None)
         if phone_obj:
             self.phones.remove(phone_obj)
             return f"✅ Phone {phone_number} deleted for contact {self.name.value}.\n"
@@ -304,8 +316,7 @@ class Record:
                 results.append((n, match_count))
 
         results.sort(
-            key=lambda item: (-item[1], -
-                              item[0].updated_at.timestamp(), item[0].id)
+            key=lambda item: (-item[1], -item[0].updated_at.timestamp(), item[0].id)
         )
         return results
 
@@ -341,8 +352,7 @@ class Record:
             f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
         )
         notes_str = f", notes: {len(self.notes)}" if self.notes else ""
-        # return f" {LIGHT_GRAY}Contact name:{RESET} {self.name.value}, {LIGHT_GRAY}phones:{RESET} {phones_str}{birthday_str}{notes_str}"
-        # return f" Contact name: {YELLOW}{self.name.value}{RESET}, phones: {CYAN}{phones_str}{RESET}{birthday_str}"
+
         name_fixed = self.name.value.ljust(12)
         return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}"
 
@@ -360,8 +370,7 @@ class AddressBook(UserDict):
             del self.data[name]
             return f"✅ Record for contact {name} deleted.\n"
         else:
-            raise RecordNotFoundError(
-                f"ℹ️  Record with name {name} not found.\n")
+            raise RecordNotFoundError(f"ℹ️  Record with name {name} not found.\n")
 
     def search_notes_global(self, query: str):
         q = query.strip()
@@ -381,8 +390,7 @@ class AddressBook(UserDict):
             return []
         results = []
         for record in self.data.values():
-            matches = record.search_notes_by_tags(
-                query_tags, match_all=match_all)
+            matches = record.search_notes_by_tags(query_tags, match_all=match_all)
             for note, match_count in matches:
                 ensure_note_has_tags(note)
                 results.append(
@@ -395,8 +403,7 @@ class AddressBook(UserDict):
                     }
                 )
 
-        results.sort(key=lambda x: (-x["matches"],
-                     x["name"].lower(), x["note_id"]))
+        results.sort(key=lambda x: (-x["matches"], x["name"].lower(), x["note_id"]))
         return results
 
     def search_notes_global(self, query: str):
@@ -417,8 +424,7 @@ class AddressBook(UserDict):
             return []
         results = []
         for record in self.data.values():
-            matches = record.search_notes_by_tags(
-                query_tags, match_all=match_all)
+            matches = record.search_notes_by_tags(query_tags, match_all=match_all)
             for note, match_count in matches:
                 ensure_note_has_tags(note)
                 results.append(
@@ -431,8 +437,7 @@ class AddressBook(UserDict):
                     }
                 )
 
-        results.sort(key=lambda x: (-x["matches"],
-                     x["name"].lower(), x["note_id"]))
+        results.sort(key=lambda x: (-x["matches"], x["name"].lower(), x["note_id"]))
         return results
 
     def get_upcoming_birthdays(self):
@@ -580,7 +585,7 @@ def add_note_cmd(args, book: AddressBook):
     if "tags:" in args:
         tags_index = args.index("tags:")
         text_tokens = args[1:tags_index]
-        tag_tokens = args[tags_index + 1:]
+        tag_tokens = args[tags_index + 1 :]
         text = " ".join(text_tokens).strip()
         tags = normalize_tags(tag_tokens) if tag_tokens else []
     else:
@@ -694,8 +699,7 @@ def add_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.add_tags(tags)
     return f"Tags added to note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
 
@@ -717,8 +721,7 @@ def remove_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.remove_tags(tags)
     return f"Tags removed from note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
 
@@ -735,8 +738,7 @@ def clear_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.clear_tags()
     return f"All tags cleared for note [{note_id}] of contact {name}."
 
@@ -767,8 +769,7 @@ def search_tags_cmd(args, book: AddressBook):
     for note, match_count in found:
         ensure_note_has_tags(note)
         tag_suffix = f" [#{', #'.join(note.tags)}]" if note.tags else ""
-        lines.append(
-            f"- [{note.id}] {note.text}{tag_suffix} (matches: {match_count})")
+        lines.append(f"- [{note.id}] {note.text}{tag_suffix} (matches: {match_count})")
     return "\n".join(lines)
 
 
@@ -792,8 +793,7 @@ def find_tags_cmd(args, book: AddressBook):
         f"Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}"
     ]
     for item in results:
-        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get(
-            "tags") else ""
+        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get("tags") else ""
         lines.append(
             f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
         )
@@ -808,7 +808,7 @@ def add_note_cmd(args, book: AddressBook):
     if "tags:" in args:
         tags_index = args.index("tags:")
         text_tokens = args[1:tags_index]
-        tag_tokens = args[tags_index + 1:]
+        tag_tokens = args[tags_index + 1 :]
         text = " ".join(text_tokens).strip()
         tags = normalize_tags(tag_tokens) if tag_tokens else []
     else:
@@ -922,8 +922,7 @@ def add_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.add_tags(tags)
     return f"Tags added to note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
 
@@ -945,8 +944,7 @@ def remove_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.remove_tags(tags)
     return f"Tags removed from note [{note_id}] for contact {name}: {', '.join('#' + t for t in tags)}"
 
@@ -963,8 +961,7 @@ def clear_tags_cmd(args, book: AddressBook):
         raise KeyError
     note = record.find_note(note_id)
     if note is None:
-        raise NoteNotFoundError(
-            f"Note [{note_id}] not found for contact {name}.")
+        raise NoteNotFoundError(f"Note [{note_id}] not found for contact {name}.")
     note.clear_tags()
     return f"All tags cleared for note [{note_id}] of contact {name}."
 
@@ -995,8 +992,7 @@ def search_tags_cmd(args, book: AddressBook):
     for note, match_count in found:
         ensure_note_has_tags(note)
         tag_suffix = f" [#{', #'.join(note.tags)}]" if note.tags else ""
-        lines.append(
-            f"- [{note.id}] {note.text}{tag_suffix} (matches: {match_count})")
+        lines.append(f"- [{note.id}] {note.text}{tag_suffix} (matches: {match_count})")
     return "\n".join(lines)
 
 
@@ -1020,8 +1016,7 @@ def find_tags_cmd(args, book: AddressBook):
         f"Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}"
     ]
     for item in results:
-        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get(
-            "tags") else ""
+        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get("tags") else ""
         lines.append(
             f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
         )
@@ -1031,7 +1026,7 @@ def find_tags_cmd(args, book: AddressBook):
 def main():
     book = load_data()
     print("\n👋 Welcome to the assistant bot!")
-    print(f"""
+    print(rf"""
  /$$$$$$$$                  /$$              /$$$$$$$$                               
 |__  $$__/                 | $$             |__  $$__/                               
    | $$ /$$   /$$  /$$$$$$ | $$$$$$$   /$$$$$$ | $$  /$$$$$$   /$$$$$$  /$$$$$$/$$$$ 
@@ -1076,16 +1071,28 @@ def main():
         "find-tags": find_tags_cmd,
     }
 
-    # Create a completer with available commands and common words
+    all_commands = list(commands.keys()) + ["hello", "exit", "close"]
+
+    def guess_commands(cmd, options):
+        opts = list(options)
+        fuzzy = get_close_matches(cmd, opts, n=5, cutoff=0.5)
+        prefix = [o for o in opts if o.startswith(cmd)]
+        infix = [o for o in opts if cmd in o]
+        combined = []
+        seen = set()
+        for o in fuzzy + prefix + infix:
+            if o not in seen:
+                seen.add(o)
+                combined.append(o)
+        return combined[:5]
+
     command_completer = WordCompleter(
-        list(commands.keys()) + ["hello", "exit", "close"],
-        ignore_case=True
+        list(commands.keys()) + ["hello", "exit", "close"], ignore_case=True
     )
 
     while True:
         try:
-            user_input = prompt("Enter a command: ",
-                                completer=command_completer)
+            user_input = pt_prompt("Enter a command: ", completer=command_completer)
         except (KeyboardInterrupt, EOFError):
             save_data(book)
             print("Good bye! Data saved.\n")
@@ -1114,19 +1121,9 @@ def main():
                 print(commands[command](args, book))
             continue
 
-        guessed = guess_command(command, all_commands)
-        if guessed:
-            print(f"Did you mean '{guessed}'?")
-            if guessed in ["all", "birthdays"]:
-                print(commands[guessed](args=[], book=book))
-            elif guessed in commands:
-                print(commands[guessed](args, book))
-            elif guessed == "hello":
-                print("How can I help you?")
-            elif guessed in ["exit", "close"]:
-                save_data(book)
-                print("Work completed. Data saved. Bye!")
-                break
+        suggestions = guess_commands(command, all_commands)
+        if suggestions:
+            print(f"Did you mean: {', '.join(suggestions)}?")
         else:
             print("Unknown command. Try again.")
 
