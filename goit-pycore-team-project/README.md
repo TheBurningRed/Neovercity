@@ -1,12 +1,12 @@
-![alt text](assets/logo-turboteem.webp)
-
----
 # PyhonBot by TurboTeem
 ### Ваш персональний помічник для зберігання контактів
 
 ---
+![logo.png](assets/logo.png)
 
-Більше ніколи не переплутайте хто є хто з унікальним рішенняв від команди TurboTeem
+---
+
+Ви більше ніколи не сплутаєте свої контакти разом з унікальним рішенням від команди ***TurboTeem***
 
 ---
 
@@ -18,36 +18,46 @@
  - Email 
  - та днями народження до книги контактів!
 
-![merch_man_turbo_teem.webp](assets/merch_man_turbo_teem.webp) 
-
 ---
 
 #### Виводьте список контактів
 
 у яких день народження через задану кількість днів від поточної дати
 
-<img src="assets/merch_woomen.png" alt="merch_woomen" height="400" width="auto">
-
 --- 
 
 #### Перевіряйте правильність
 
-![phone.webp](assets/phone.webp)
-
 Валідйуте правильність введеного номера телефону та email під час створення або редагування запису та повідомляти користувача у разі некоректного введення
 
-### А також:
+#### А також:
 - Здійснйте пошук контактів серед контактів книги
 - Редагуйте та видаляйте записи з книги контактів 
 - Зберігайте нотатки з текстовою інформацією 
 - Пошук за нотатками
 - Редагуйте та видаляти нотатки
 
-
 ---
 
-Інструкція з користування:
+### Інструкція з користування:
 
-[TODO] Налаштування пітону (pip install etc)
+- Встановіть Python 3.8+
+- Виконайте `pip install -r requirements.txt`
+- Запустіть програму `python main.py`
+- Почніть друкувати одну з підтримуваних команд, зручний автокомліт підставить коректну назву
+- Введіть `close` або `exit` щоб вийти з програми
 
-[TODO] Доступні команди для керування додатком
+### Список доступних команд
+
+```
+hello                              - Greet the assistant
+add [name [phone]                  - Add a contact
+change [name] [old_num] [new_num]  - Change a contact's phone
+phone [name]                       - Show phones of a contact
+add-email [name email]             - Add an email to contact
+all                                - Show all contacts
+add-birthday [name [dd.mm.yyyy]    - Add a birthday to a contact
+show-birthday [name]               - Show the birthday of a contact
+birthdays                          - Show upcoming birthdays in the next week
+close / exit                       - Save and exit
+```
