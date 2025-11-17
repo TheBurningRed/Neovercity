@@ -1056,9 +1056,11 @@ def main():
         "change": change_contact,
         "delete": delete_contact,
         "all": show_all,
-        "birthday": add_birthday,
+        "add-birthday": add_birthday,
+        "show-birthday": show_birthday,
         "birthdays": upcoming_birthdays,
         "add-note": add_note_cmd,
+        "phone": show_phone,
         "list-notes": list_notes_cmd,
         "search-notes": search_notes_cmd,
         "edit-note": edit_note_cmd,
@@ -1116,7 +1118,7 @@ def main():
                 print(commands[command](book))
             elif command == "birthdays":
                 print()
-                print(commands[command]([], book))
+                print(commands[command](book))
             else:
                 print(commands[command](args, book))
             continue
@@ -1125,7 +1127,29 @@ def main():
         if suggestions:
             print(f"Did you mean: {', '.join(suggestions)}?")
         else:
-            print("Unknown command. Try again.")
+            print(
+                "Invalid command. Available commands:\n"
+                "hello - greeting\n"
+                "add <name> <phone> - add contact or phone\n"
+                "change <name> <old_phone> <new_phone> - change phone\n"
+                "phone <name> - show phones\n"
+                "all - show all contacts\n"
+                "add-birthday <name> <DD.MM.YYYY> - add birthday\n"
+                "show-birthday <name> - show birthday\n"
+                "birthdays - show upcoming birthdays\n"
+                "add-note <name> <text> [tags: <t1,t2,...>] - add note\n"
+                "list-notes <name> [--sort tags] - list contact notes\n"
+                "search-notes <name> <query> - search contact notes\n"
+                "edit-note <name> <note_id> <new text> - edit note\n"
+                "delete-note <name> <note_id> - delete note\n"
+                "find-notes <query> - global notes search\n"
+                "add-tags <name> <note_id> <tag1> [tag2 ...] - add tags to note\n"
+                "remove-tags <name> <note_id> <tag1> [tag2 ...] - remove tags from note\n"
+                "clear-tags <name> <note_id> - clear note tags\n"
+                "search-tags <name> <tag1> [tag2 ...] [--any] - search notes by tags\n"
+                "find-tags <tag1> [tag2 ...] [--any] - global search by tags\n"
+                "close | exit - save and quit"
+            )
 
 
 if __name__ == "__main__":
