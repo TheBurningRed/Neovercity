@@ -580,7 +580,7 @@ def upcoming_birthdays(book: AddressBook):
 @input_error
 def add_note_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: add-note <name> <note text> [tags: <tag1,tag2,...>]"
+        return "ℹ️  Usage: add-note <name> <note text> [tags: <tag1,tag2,...>]"
     name = args[0]
     if "tags:" in args:
         tags_index = args.index("tags:")
@@ -600,7 +600,7 @@ def add_note_cmd(args, book: AddressBook):
 @input_error
 def list_notes_cmd(args, book: AddressBook):
     if len(args) < 1:
-        return "Usage: list-notes <name> [--sort tags]"
+        return "ℹ️  Usage: list-notes <name> [--sort tags]"
     name = args[0]
     sort_by_tags = False
     if len(args) >= 3 and args[1] in ("--sort", "-s") and args[2] == "tags":
@@ -609,9 +609,9 @@ def list_notes_cmd(args, book: AddressBook):
     if record is None:
         raise KeyError
     if not record.notes:
-        return f"No notes for contact {name}."
+        return f"ℹ️  No notes for contact {name}."
     notes = record.list_notes_sorted_by_tags() if sort_by_tags else record.list_notes()
-    lines = [f"Notes for {name}:"]
+    lines = [f"\n{LIGHT_GRAY_BG}Notes for {name}:{RESET_BG}"]
     for n in notes:
         ensure_note_has_tags(n)
         tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
@@ -622,7 +622,7 @@ def list_notes_cmd(args, book: AddressBook):
 @input_error
 def search_notes_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: search-notes <name> <query>"
+        return "ℹ️  Usage: search-notes <name> <query>" 
     name = args[0]
     query = " ".join(args[1:])
     record = book.find(name)
@@ -630,7 +630,7 @@ def search_notes_cmd(args, book: AddressBook):
         raise KeyError
     found = record.search_notes(query)
     if not found:
-        return f"No notes matched '{query}' for contact {name}."
+        return f"ℹ️  No notes matched '{query}' for contact {name}."
     lines = [f"Found notes for {name} (query: '{query}'):"]
     for n in found:
         ensure_note_has_tags(n)
@@ -642,7 +642,7 @@ def search_notes_cmd(args, book: AddressBook):
 @input_error
 def edit_note_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: edit-note <name> <note_id> <new text>"
+        return "ℹ️  Usage: edit-note <name> <note_id> <new text>"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -671,12 +671,12 @@ def delete_note_cmd(args, book: AddressBook):
 @input_error
 def find_notes_cmd(args, book: AddressBook):
     if not args:
-        return "Usage: find-notes <query>"
+        return "ℹ️  Usage: find-notes <query>"  
     query = " ".join(args)
     results = book.search_notes_global(query)
     if not results:
-        return f"No notes matched '{query}'."
-    lines = [f"Global notes search (query: '{query}'):"]
+        return f"ℹ️  No notes matched '{query}'."
+    lines = [f"\n{LIGHT_GRAY_BG}Global notes search (query: '{query}'):{RESET_BG}"]
     for item in results:
         lines.append(f"- {item['name']} [{item['note_id']}]: {item['text']}")
     return "\n".join(lines)
@@ -685,7 +685,7 @@ def find_notes_cmd(args, book: AddressBook):
 @input_error
 def add_tags_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: add-tags <name> <note_id> <tag1> [tag2 ...]"
+        return "ℹ️  Usage: add-tags <name> <note_id> <tag1> [tag2 ...]"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -707,7 +707,7 @@ def add_tags_cmd(args, book: AddressBook):
 @input_error
 def remove_tags_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"
+        return "ℹ️  Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"    
     name = args[0]
     try:
         note_id = int(args[1])
@@ -746,7 +746,7 @@ def clear_tags_cmd(args, book: AddressBook):
 @input_error
 def search_tags_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: search-tags <name> <tag1> [tag2 ...] [--any]"
+        return "ℹ️  Usage: search-tags <name> <tag1> [tag2 ...] [--any]"
     name = args[0]
     match_all = True
     tags_tokens = args[1:]
@@ -761,7 +761,7 @@ def search_tags_cmd(args, book: AddressBook):
         raise KeyError
     found = record.search_notes_by_tags(tags, match_all=match_all)
     if not found:
-        return f"No notes matched tags for contact {name}."
+        return f"ℹ️  No notes matched tags for contact {name}."
     criterion = "all" if match_all else "any"
     lines = [
         f"Notes for {name} matching {criterion} of tags: {', '.join('#' + t for t in tags)}"
@@ -776,7 +776,7 @@ def search_tags_cmd(args, book: AddressBook):
 @input_error
 def find_tags_cmd(args, book: AddressBook):
     if not args:
-        return "Usage: find-tags <tag1> [tag2 ...] [--any]"
+        return "ℹ️  Usage: find-tags <tag1> [tag2 ...] [--any]" 
     match_all = True
     tags_tokens = list(args)
     if "--any" in tags_tokens:
@@ -787,15 +787,15 @@ def find_tags_cmd(args, book: AddressBook):
         return "Provide at least one tag."
     results = book.search_notes_by_tags_global(tags, match_all=match_all)
     if not results:
-        return "No notes matched the given tags."
+        return "ℹ️  No notes matched the given tags."
     criterion = "all" if match_all else "any"
     lines = [
-        f"Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}"
+        f"\n{LIGHT_GRAY_BG}Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}{RESET_BG}"
     ]
     for item in results:
-        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get("tags") else ""
+        tag_suffix = f" [{BLUE}#{', #'.join(item['tags'])}{RESET}]" if item.get("tags") else ""
         lines.append(
-            f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
+            f"- {GREEN}{item['name']}{RESET} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})\n"
         )
     return "\n".join(lines)
 
@@ -803,7 +803,7 @@ def find_tags_cmd(args, book: AddressBook):
 @input_error
 def add_note_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: add-note <name> <note text> [tags: <tag1,tag2,...>]"
+        return "ℹ️  Usage: add-note <name> <note text> [tags: <tag1,tag2,...>]"
     name = args[0]
     if "tags:" in args:
         tags_index = args.index("tags:")
@@ -823,7 +823,7 @@ def add_note_cmd(args, book: AddressBook):
 @input_error
 def list_notes_cmd(args, book: AddressBook):
     if len(args) < 1:
-        return "Usage: list-notes <name> [--sort tags]"
+        return "ℹ️  Usage: list-notes <name> [--sort tags]"   
     name = args[0]
     sort_by_tags = False
     if len(args) >= 3 and args[1] in ("--sort", "-s") and args[2] == "tags":
@@ -832,9 +832,9 @@ def list_notes_cmd(args, book: AddressBook):
     if record is None:
         raise KeyError
     if not record.notes:
-        return f"No notes for contact {name}."
+        return f"ℹ️  No notes for contact {name}."
     notes = record.list_notes_sorted_by_tags() if sort_by_tags else record.list_notes()
-    lines = [f"Notes for {name}:"]
+    lines = [f"\n{LIGHT_GRAY_BG}Notes for {name}:{RESET_BG}"]
     for n in notes:
         ensure_note_has_tags(n)
         tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
@@ -845,7 +845,7 @@ def list_notes_cmd(args, book: AddressBook):
 @input_error
 def search_notes_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: search-notes <name> <query>"
+        return "ℹ️  Usage: search-notes <name> <query>"   
     name = args[0]
     query = " ".join(args[1:])
     record = book.find(name)
@@ -853,8 +853,8 @@ def search_notes_cmd(args, book: AddressBook):
         raise KeyError
     found = record.search_notes(query)
     if not found:
-        return f"No notes matched '{query}' for contact {name}."
-    lines = [f"Found notes for {name} (query: '{query}'):"]
+        return f"ℹ️  No notes matched '{query}' for contact {name}."
+    lines = [f"\n{LIGHT_GRAY_BG}Found notes for {name} (query: '{query}'):{RESET_BG}"]
     for n in found:
         ensure_note_has_tags(n)
         tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
@@ -865,7 +865,7 @@ def search_notes_cmd(args, book: AddressBook):
 @input_error
 def edit_note_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: edit-note <name> <note_id> <new text>"
+        return "ℹ️  Usage: edit-note <name> <note_id> <new text>"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -894,21 +894,21 @@ def delete_note_cmd(args, book: AddressBook):
 @input_error
 def find_notes_cmd(args, book: AddressBook):
     if not args:
-        return "Usage: find-notes <query>"
+        return "ℹ️  Usage: find-notes <query>"    
     query = " ".join(args)
     results = book.search_notes_global(query)
     if not results:
-        return f"No notes matched '{query}'."
-    lines = [f"Global notes search (query: '{query}'):"]
+        return f"ℹ️  No notes matched '{query}'."
+    lines = [f"\n{LIGHT_GRAY_BG}Global notes search (query: '{query}'):{RESET_BG}"]
     for item in results:
-        lines.append(f"- {item['name']} [{item['note_id']}]: {item['text']}")
+        lines.append(f"- {GREEN}{item['name']}{RESET} [{item['note_id']}]: {item['text']}")
     return "\n".join(lines)
 
 
 @input_error
 def add_tags_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: add-tags <name> <note_id> <tag1> [tag2 ...]"
+        return "ℹ️  Usage: add-tags <name> <note_id> <tag1> [tag2 ...]"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -930,7 +930,7 @@ def add_tags_cmd(args, book: AddressBook):
 @input_error
 def remove_tags_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"
+        return "ℹ️  Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -969,7 +969,7 @@ def clear_tags_cmd(args, book: AddressBook):
 @input_error
 def search_tags_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "Usage: search-tags <name> <tag1> [tag2 ...] [--any]"
+        return "ℹ️  Usage: search-tags <name> <tag1> [tag2 ...] [--any]"  
     name = args[0]
     match_all = True
     tags_tokens = args[1:]
@@ -984,7 +984,7 @@ def search_tags_cmd(args, book: AddressBook):
         raise KeyError
     found = record.search_notes_by_tags(tags, match_all=match_all)
     if not found:
-        return f"No notes matched tags for contact {name}."
+        return f"ℹ️  No notes matched tags for contact {name}."
     criterion = "all" if match_all else "any"
     lines = [
         f"Notes for {name} matching {criterion} of tags: {', '.join('#' + t for t in tags)}"
@@ -999,7 +999,7 @@ def search_tags_cmd(args, book: AddressBook):
 @input_error
 def find_tags_cmd(args, book: AddressBook):
     if not args:
-        return "Usage: find-tags <tag1> [tag2 ...] [--any]"
+        return "ℹ️  Usage: find-tags <tag1> [tag2 ...] [--any]"
     match_all = True
     tags_tokens = list(args)
     if "--any" in tags_tokens:
@@ -1010,15 +1010,15 @@ def find_tags_cmd(args, book: AddressBook):
         return "Provide at least one tag."
     results = book.search_notes_by_tags_global(tags, match_all=match_all)
     if not results:
-        return "No notes matched the given tags."
+        return "ℹ️  No notes matched the given tags."
     criterion = "all" if match_all else "any"
     lines = [
-        f"Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}"
+        f"\n{LIGHT_GRAY_BG}Global notes search by {criterion} tags: {', '.join('#' + t for t in tags)}{RESET_BG}"
     ]
     for item in results:
-        tag_suffix = f" [#{', #'.join(item['tags'])}]" if item.get("tags") else ""
+        tag_suffix = f" [{BLUE}#{', #'.join(item['tags'])}{RESET}]" if item.get("tags") else ""
         lines.append(
-            f"- {item['name']} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})"
+            f"- {GREEN}{item['name']}{RESET} [{item['note_id']}]: {item['text']}{tag_suffix} (matches: {item['matches']})\n"
         )
     return "\n".join(lines)
 
@@ -1038,16 +1038,27 @@ def main():
 
 {GREEN_BG} Available commands! Please use one of the following: {RESET}
 
-{GREEN}hello{RESET}                               - Greet the assistant
-{GREEN}add {CYAN}[name] [phone]{RESET}                  - Add a contact
-{GREEN}change {CYAN}[name] [old_num] [new_num]{RESET}   - Change a contact's phone
-{GREEN}phone {CYAN}[name]{RESET}                        - Show phones of a contact
-{GREEN}add-email {CYAN}[name] [email]{RESET}            - Add an email to contact
-{GREEN}all{RESET}                                 - Show all contacts
-{GREEN}add-birthday {CYAN}[name] [dd.mm.yyyy]{RESET}    - Add a birthday to a contact
-{GREEN}show-birthday {CYAN}[name]{RESET}                - Show the birthday of a contact
-{GREEN}birthdays{RESET}                           - Show upcoming birthdays in the next week
-{GREEN}close{RESET} / {GREEN}exit{RESET}                        - Save and exit
+{GREEN}hello{RESET}                                          - greet the assistant
+{GREEN}add {CYAN}<name> <phone>{RESET}                             - add a contact or phone
+{GREEN}change {CYAN}<name> <old_num> <new_num>{RESET}              - change a contact's phone
+{GREEN}phone {CYAN}<name>{RESET}                                   - show phones of a contact
+{GREEN}add-email {CYAN}<name> <email>{RESET}                       - add an email to contact
+{GREEN}all{RESET}                                            - show all contacts
+{GREEN}add-birthday {CYAN}<name> <DD.MM.YYYY]{RESET}               - add a birthday to a contact
+{GREEN}show-birthday {CYAN}<name>{RESET}                           - show the birthday of a contact
+{GREEN}birthdays{RESET}                                      - show upcoming birthdays in the next week
+{GREEN}add-note {CYAN}<name> <text> [tags: <t1,t2,...>]{RESET}     - add note
+{GREEN}list-notes {CYAN}<name> [--sort tags]{RESET}                - list contact notes
+{GREEN}search-notes {CYAN}<name> <query>{RESET}                    - search contact notes
+{GREEN}edit-note {CYAN}<name> <note_id> <new text>{RESET}          - edit note
+{GREEN}delete-note {CYAN}<name> <note_id>{RESET}                   - delete note
+{GREEN}find-notes {CYAN}<query>{RESET}                             - global notes search
+{GREEN}add-tags {CYAN}<name> <note_id> <tag1> [tag2 ...]{RESET}    - add tags to note
+{GREEN}remove-tags {CYAN}<name> <note_id> <tag1> [tag2 ...]{RESET} - remove tags from note
+{GREEN}clear-tags {CYAN}<name> <note_id>{RESET}                    - clear note tags
+{GREEN}search-tags {CYAN}<name> <tag1> [tag2 ...] [--any]{RESET}   - search notes by tags
+{GREEN}find-tags {CYAN}<tag1> [tag2 ...] [--any]{RESET}            - global search by tags
+{GREEN}close{RESET} / {GREEN}exit{RESET}                                   - Save and exit
     """)
 
     commands = {
@@ -1094,10 +1105,10 @@ def main():
 
     while True:
         try:
-            user_input = pt_prompt("Enter a command: ", completer=command_completer)
+            user_input = pt_prompt("Enter a command:  ", completer=command_completer)
         except (KeyboardInterrupt, EOFError):
             save_data(book)
-            print("Good bye! Data saved.\n")
+            print("✅ Good bye! Data saved.\n")
             break
 
         if not user_input.strip():
@@ -1108,7 +1119,7 @@ def main():
 
         if command in ["exit", "close"]:
             save_data(book)
-            print("Work completed. Data saved. Bye!")
+            print("✅ Work completed. Data saved. Bye!\n")
             break
         elif command == "hello":
             print("How can I help you?")
@@ -1127,29 +1138,31 @@ def main():
         if suggestions:
             print(f"Did you mean: {', '.join(suggestions)}?")
         else:
-            print(
-                "Invalid command. Available commands:\n"
-                "hello - greeting\n"
-                "add <name> <phone> - add contact or phone\n"
-                "change <name> <old_phone> <new_phone> - change phone\n"
-                "phone <name> - show phones\n"
-                "all - show all contacts\n"
-                "add-birthday <name> <DD.MM.YYYY> - add birthday\n"
-                "show-birthday <name> - show birthday\n"
-                "birthdays - show upcoming birthdays\n"
-                "add-note <name> <text> [tags: <t1,t2,...>] - add note\n"
-                "list-notes <name> [--sort tags] - list contact notes\n"
-                "search-notes <name> <query> - search contact notes\n"
-                "edit-note <name> <note_id> <new text> - edit note\n"
-                "delete-note <name> <note_id> - delete note\n"
-                "find-notes <query> - global notes search\n"
-                "add-tags <name> <note_id> <tag1> [tag2 ...] - add tags to note\n"
-                "remove-tags <name> <note_id> <tag1> [tag2 ...] - remove tags from note\n"
-                "clear-tags <name> <note_id> - clear note tags\n"
-                "search-tags <name> <tag1> [tag2 ...] [--any] - search notes by tags\n"
-                "find-tags <tag1> [tag2 ...] [--any] - global search by tags\n"
-                "close | exit - save and quit"
-            )
+            print(rf"""
+{RED_BG}Invalid command. Available commands:{RESET}
+{GREEN}hello{RESET}                                          - greet the assistant
+{GREEN}add {CYAN}<name> <phone>{RESET}                             - add a contact or phone
+{GREEN}change {CYAN}<name> <old_num> <new_num>{RESET}              - change a contact's phone
+{GREEN}phone {CYAN}<name>{RESET}                                   - show phones of a contact
+{GREEN}add-email {CYAN}<name> <email>{RESET}                       - add an email to contact
+{GREEN}all{RESET}                                            - show all contacts
+{GREEN}add-birthday {CYAN}<name> <DD.MM.YYYY]{RESET}               - add a birthday to a contact
+{GREEN}show-birthday {CYAN}<name>{RESET}                           - show the birthday of a contact
+{GREEN}birthdays{RESET}                                      - show upcoming birthdays in the next week
+{GREEN}add-note {CYAN}<name> <text> [tags: <t1,t2,...>]{RESET}     - add note
+{GREEN}list-notes {CYAN}<name> [--sort tags]{RESET}                - list contact notes
+{GREEN}search-notes {CYAN}<name> <query>{RESET}                    - search contact notes
+{GREEN}edit-note {CYAN}<name> <note_id> <new text>{RESET}          - edit note
+{GREEN}delete-note {CYAN}<name> <note_id>{RESET}                   - delete note
+{GREEN}find-notes {CYAN}<query>{RESET}                             - global notes search
+{GREEN}add-tags {CYAN}<name> <note_id> <tag1> [tag2 ...]{RESET}    - add tags to note
+{GREEN}remove-tags {CYAN}<name> <note_id> <tag1> [tag2 ...]{RESET} - remove tags from note
+{GREEN}clear-tags {CYAN}<name> <note_id>{RESET}                    - clear note tags
+{GREEN}search-tags {CYAN}<name> <tag1> [tag2 ...] [--any]{RESET}   - search notes by tags
+{GREEN}find-tags {CYAN}<tag1> [tag2 ...] [--any]{RESET}            - global search by tags
+{GREEN}close{RESET} / {GREEN}exit{RESET}                                   - Save and exit
+"""
+)
 
 
 if __name__ == "__main__":
