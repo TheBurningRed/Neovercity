@@ -88,6 +88,10 @@ def input_error(func):
             return str(e)
         except RecordNotFoundError as e:
             return str(e)
+        except AddressValidationError as e:
+            return str(e)
+        except EmailValidationError as e:
+            return str(e)
         except NoteNotFoundError as e:
             return str(e)
         except Exception as e:
@@ -190,6 +194,8 @@ class Phone(Field):
         self._value = new_value
 
 class Address(Field):
+    def __init__(self, value):
+        self._value = value
     @Field.value.setter
     def value(self, new_value):
         if not re.fullmatch(r".{5,}", new_value):
@@ -284,13 +290,24 @@ class Record:
 
     def add_address(self, address: str):
         try:
-            phone = Address(address)
-            if phone.value not in [p.value for p in self.phones]:
-                self.addresses.append(address)
+            addr = Address(address)
+            if addr.value not in [a.value for a in self.addresses]:
+                self.addresses.append(addr)
                 return f"✅ Address {address} added to contact {self.name.value}.\n"
             else:
                 return f"ℹ️  The address {address} already exists for contact {self.name.value}.\n"
         except AddressValidationError as e:
+            return str(e)
+
+    def add_email(self, email: str):
+        try:
+            email_value = Email(email)
+            if email_value.value not in [p.value for p in self.emails]:
+                self.emails.append(email)
+                return f"✅ Email {email} added to contact {self.name.value}.\n"
+            else:
+                return f"ℹ️  The email {email} already exists for contact {self.name.value}.\n"
+        except EmailValidationError as e:
             return str(e)
 
     def edit_phone(self, old, new):
@@ -390,9 +407,10 @@ class Record:
         )
         notes_str = f", Notes: {len(self.notes)}" if self.notes else ""
         address_str = f", Addresses: {self.addresses[0]}" if self.addresses else ""
+        email_str = f", Emails: {self.emails[0]}" if self.emails else ""
 
         name_fixed = self.name.value.ljust(12)
-        return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}{address_str}{notes_str}"
+        return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}{address_str}{email_str}{notes_str}"
 
 
 class AddressBook(UserDict):
@@ -636,7 +654,7 @@ def list_notes_cmd(args, book: AddressBook):
 @input_error
 def search_notes_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "ℹ️  Usage: search-notes <name> <query>" 
+        return "ℹ️  Usage: search-notes <name> <query>"
     name = args[0]
     query = " ".join(args[1:])
     record = book.find(name)
@@ -685,7 +703,7 @@ def delete_note_cmd(args, book: AddressBook):
 @input_error
 def find_notes_cmd(args, book: AddressBook):
     if not args:
-        return "ℹ️  Usage: find-notes <query>"  
+        return "ℹ️  Usage: find-notes <query>"
     query = " ".join(args)
     results = book.search_notes_global(query)
     if not results:
@@ -721,7 +739,7 @@ def add_tags_cmd(args, book: AddressBook):
 @input_error
 def remove_tags_cmd(args, book: AddressBook):
     if len(args) < 3:
-        return "ℹ️  Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"    
+        return "ℹ️  Usage: remove-tags <name> <note_id> <tag1> [tag2 ...]"
     name = args[0]
     try:
         note_id = int(args[1])
@@ -790,7 +808,7 @@ def search_tags_cmd(args, book: AddressBook):
 @input_error
 def find_tags_cmd(args, book: AddressBook):
     if not args:
-        return "ℹ️  Usage: find-tags <tag1> [tag2 ...] [--any]" 
+        return "ℹ️  Usage: find-tags <tag1> [tag2 ...] [--any]"
     match_all = True
     tags_tokens = list(args)
     if "--any" in tags_tokens:
@@ -837,7 +855,7 @@ def add_note_cmd(args, book: AddressBook):
 @input_error
 def list_notes_cmd(args, book: AddressBook):
     if len(args) < 1:
-        return "ℹ️  Usage: list-notes <name> [--sort tags]"   
+        return "ℹ️  Usage: list-notes <name> [--sort tags]"
     name = args[0]
     sort_by_tags = False
     if len(args) >= 3 and args[1] in ("--sort", "-s") and args[2] == "tags":
@@ -859,7 +877,7 @@ def list_notes_cmd(args, book: AddressBook):
 @input_error
 def search_notes_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "ℹ️  Usage: search-notes <name> <query>"   
+        return "ℹ️  Usage: search-notes <name> <query>"
     name = args[0]
     query = " ".join(args[1:])
     record = book.find(name)
@@ -908,7 +926,7 @@ def delete_note_cmd(args, book: AddressBook):
 @input_error
 def find_notes_cmd(args, book: AddressBook):
     if not args:
-        return "ℹ️  Usage: find-notes <query>"    
+        return "ℹ️  Usage: find-notes <query>"
     query = " ".join(args)
     results = book.search_notes_global(query)
     if not results:
@@ -983,7 +1001,7 @@ def clear_tags_cmd(args, book: AddressBook):
 @input_error
 def search_tags_cmd(args, book: AddressBook):
     if len(args) < 2:
-        return "ℹ️  Usage: search-tags <name> <tag1> [tag2 ...] [--any]"  
+        return "ℹ️  Usage: search-tags <name> <tag1> [tag2 ...] [--any]"
     name = args[0]
     match_all = True
     tags_tokens = args[1:]
