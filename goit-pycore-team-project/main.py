@@ -51,6 +51,10 @@ class PhoneValidationError(ContactError):
     pass
 
 
+class EmailValidationError(ContactError):
+    pass
+
+
 class DateValidationError(ContactError):
     pass
 
@@ -163,6 +167,16 @@ class Name(Field):
     pass
 
 
+class Email(Field):
+    @Field.value.setter
+    def value(self, new_value):
+        if not re.fullmatch(r'^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$', new_value):
+            raise EmailValidationError(
+                "ℹ️  The email must be in propper format.\n"
+            )
+        self._value = new_value
+
+
 class Phone(Field):
     @Field.value.setter
     def value(self, new_value):
@@ -232,8 +246,9 @@ class Note:
 class Record:
     def __init__(self, name):
         self.name = Name(name)
-        self.phones = []
         self.addresses = []
+        self.phones = []
+        self.emails = []
         self.birthday = None
         self.notes: list[Note] = []
         self.next_note_id = 1
@@ -406,39 +421,6 @@ class AddressBook(UserDict):
         results.sort(key=lambda x: (-x["matches"], x["name"].lower(), x["note_id"]))
         return results
 
-    def search_notes_global(self, query: str):
-        q = query.strip()
-        if not q:
-            return []
-        results = []
-        for record in self.data.values():
-            for note in record.search_notes(q):
-                results.append(
-                    {"name": record.name.value, "note_id": note.id, "text": note.text}
-                )
-        return results
-
-    def search_notes_by_tags_global(self, tags: list[str], match_all: bool = True):
-        query_tags = normalize_tags(tags)
-        if not query_tags:
-            return []
-        results = []
-        for record in self.data.values():
-            matches = record.search_notes_by_tags(query_tags, match_all=match_all)
-            for note, match_count in matches:
-                ensure_note_has_tags(note)
-                results.append(
-                    {
-                        "name": record.name.value,
-                        "note_id": note.id,
-                        "text": note.text,
-                        "tags": list(note.tags),
-                        "matches": match_count,
-                    }
-                )
-
-        results.sort(key=lambda x: (-x["matches"], x["name"].lower(), x["note_id"]))
-        return results
 
     def get_upcoming_birthdays(self):
         upcoming_birthdays = []
@@ -498,6 +480,15 @@ def add_address(args, book):
     if not record:
         raise KeyError
     return record.add_address(addr)
+
+
+@input_error
+def add_email(args, book):
+    name, email = args
+    record = book.find(name)
+    if not record:
+        raise KeyError
+    return record.add_email(email)
 
 
 @input_error
@@ -1043,7 +1034,7 @@ def main():
 {GREEN}change {CYAN}<name> <old_num> <new_num>{RESET}              - change a contact's phone
 {GREEN}phone {CYAN}<name>{RESET}                                   - show phones of a contact
 {GREEN}add-email {CYAN}<name> <email>{RESET}                       - add an email to contact
-{GREEN}all{RESET}                                            - show all contacts
+{GREEN}all{RESET}   a                                         - show all contacts
 {GREEN}add-birthday {CYAN}<name> <DD.MM.YYYY]{RESET}               - add a birthday to a contact
 {GREEN}show-birthday {CYAN}<name>{RESET}                           - show the birthday of a contact
 {GREEN}birthdays{RESET}                                      - show upcoming birthdays in the next week
@@ -1064,6 +1055,7 @@ def main():
     commands = {
         "add": add_contact,
         "add-address": add_address,
+        "add-email": add_email,
         "change": change_contact,
         "delete": delete_contact,
         "all": show_all,
