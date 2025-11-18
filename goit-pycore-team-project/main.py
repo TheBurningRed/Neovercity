@@ -1173,15 +1173,15 @@ def main():
         else:
             print(rf"""
 {RED_BG}Invalid command. Available commands:{RESET}
-{GREEN}hello{RESET}                                          - greet the assistant
+{GREEN}hello{RESET}                                                - greet the assistant
 {GREEN}add {CYAN}<name> <phone>{RESET}                             - add a contact or phone
 {GREEN}change {CYAN}<name> <old_num> <new_num>{RESET}              - change a contact's phone
 {GREEN}phone {CYAN}<name>{RESET}                                   - show phones of a contact
 {GREEN}add-email {CYAN}<name> <email>{RESET}                       - add an email to contact
-{GREEN}all{RESET}                                            - show all contacts
+{GREEN}all{RESET}                                                  - show all contacts
 {GREEN}add-birthday {CYAN}<name> <DD.MM.YYYY]{RESET}               - add a birthday to a contact
 {GREEN}show-birthday {CYAN}<name>{RESET}                           - show the birthday of a contact
-{GREEN}birthdays{RESET}                                      - show upcoming birthdays in the next week
+{GREEN}birthdays{RESET}                                            - show upcoming birthdays in the next week
 {GREEN}add-note {CYAN}<name> <text> [tags: <t1,t2,...>]{RESET}     - add note
 {GREEN}list-notes {CYAN}<name> [--sort tags]{RESET}                - list contact notes
 {GREEN}search-notes {CYAN}<name> <query>{RESET}                    - search contact notes
@@ -1193,7 +1193,7 @@ def main():
 {GREEN}clear-tags {CYAN}<name> <note_id>{RESET}                    - clear note tags
 {GREEN}search-tags {CYAN}<name> <tag1> [tag2 ...] [--any]{RESET}   - search notes by tags
 {GREEN}find-tags {CYAN}<tag1> [tag2 ...] [--any]{RESET}            - global search by tags
-{GREEN}close{RESET} / {GREEN}exit{RESET}                                   - Save and exit
+{GREEN}close{RESET} / {GREEN}exit{RESET}                           - Save and exit
 """
 )
 
