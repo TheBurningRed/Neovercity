@@ -335,7 +335,7 @@ class Record:
         self.notes.append(note)
         self.next_note_id += 1
         if note.tags:
-            return f"Note [{note.id}] added for contact {self.name.value} with tags: {', '.join('#' + t for t in note.tags)}."
+            return f"✅ Note [{note.id}] added for contact {self.name.value} with tags: {', '.join('#' + t for t in note.tags)}."
         return f"Note [{note.id}] added for contact {self.name.value}."
 
     def list_notes(self) -> list[Note]:
@@ -405,9 +405,9 @@ class Record:
         birthday_str = (
             f"   Birthday: {GREEN}{self.birthday}{RESET}" if self.birthday else ""
         )
-        notes_str = f", Notes: {len(self.notes)}" if self.notes else ""
+        notes_str = f", Notes: {BLUE}{len(self.notes)}{RESET}" if self.notes else ""
         address_str = f", Addresses: {self.addresses[0]}" if self.addresses else ""
-        email_str = f", Emails: {self.emails[0]}" if self.emails else ""
+        email_str = f", Emails: {MAGENTA}{self.emails[0]}{RESET}" if self.emails else ""
 
         name_fixed = self.name.value.ljust(12)
         return f" Name: {YELLOW}{name_fixed}{RESET}  Phones: {CYAN}{phones_str}{RESET}{birthday_str}{address_str}{email_str}{notes_str}"
@@ -666,7 +666,7 @@ def search_notes_cmd(args, book: AddressBook):
     lines = [f"Found notes for {name} (query: '{query}'):"]
     for n in found:
         ensure_note_has_tags(n)
-        tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
+        tag_suffix = f" [{BLUE}#{', #'.join(n.tags)}{RESET}]" if n.tags else ""
         lines.append(f"- [{n.id}] {n.text}{tag_suffix}")
     return "\n".join(lines)
 
@@ -889,7 +889,7 @@ def search_notes_cmd(args, book: AddressBook):
     lines = [f"\n{LIGHT_GRAY_BG}Found notes for {name} (query: '{query}'):{RESET_BG}"]
     for n in found:
         ensure_note_has_tags(n)
-        tag_suffix = f" [#{', #'.join(n.tags)}]" if n.tags else ""
+        tag_suffix = f" [{BLUE}#{', #'.join(n.tags)}{RESET}]" if n.tags else ""
         lines.append(f"- [{n.id}] {n.text}{tag_suffix}")
     return "\n".join(lines)
 
@@ -1075,7 +1075,7 @@ def main():
 {GREEN}change {CYAN}<name> <old_num> <new_num>{RESET}              - change a contact's phone
 {GREEN}phone {CYAN}<name>{RESET}                                   - show phones of a contact
 {GREEN}add-email {CYAN}<name> <email>{RESET}                       - add an email to contact
-{GREEN}all{RESET}   a                                         - show all contacts
+{GREEN}all{RESET}                                            - show all contacts
 {GREEN}add-birthday {CYAN}<name> <DD.MM.YYYY]{RESET}               - add a birthday to a contact
 {GREEN}show-birthday {CYAN}<name>{RESET}                           - show the birthday of a contact
 {GREEN}birthdays{RESET}                                      - show upcoming birthdays in the next week
