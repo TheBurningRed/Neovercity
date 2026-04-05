@@ -1,0 +1,36 @@
+Завдання 1, слайди P1, P2
+
+SELECT * FROM mydb.products;
+SELECT name, phone from shippers;
+----------------------------------
+
+Завдання 2, слайд P3
+
+SELECT avg(price), min(price), max(price) from products;
+
+-------------------------------------------------------
+
+Завдання 3, слайд P4
+
+SELECT DISTINCT category_id, price
+FROM products
+ORDER BY price DESC
+LIMIT 10;
+
+--------------------------------------
+
+Завдання 4, слайд P5
+
+SELECT COUNT(*) as count_products
+FROM products
+WHERE price BETWEEN 20 AND 100;
+
+---------------------------------------
+
+Завдання 5, слайд P6
+
+SELECT supplier_id,
+	COUNT(*) as count_products,
+	avg(price) as price_average
+FROM products
+GROUP BY supplier_id;
