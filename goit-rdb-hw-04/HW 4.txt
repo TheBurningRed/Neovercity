@@ -1,0 +1,265 @@
+Завдання 1
+
+CREATE SCHEMA LibraryManagement;
+
+USE LibraryManagement;
+
+CREATE TABLE authors (
+    author_id INT AUTO_INCREMENT PRIMARY KEY, 
+    author_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE genres (
+    genre_id INT AUTO_INCREMENT PRIMARY KEY, 
+    genre_name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY, 
+    title VARCHAR(255) NOT NULL,
+    publication_year YEAR,
+    author_id INT,
+    genre_id INT,
+    FOREIGN KEY (author_id) REFERENCES authors(author_id),
+    FOREIGN KEY (genre_id) REFERENCES genres(genre_id)
+);
+
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY, 
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE borrowed_books (
+    borrow_id INT AUTO_INCREMENT PRIMARY KEY, 
+    book_id INT NOT NULL,
+    user_id INT NOT NULL,
+    borrow_date DATE NOT NULL,
+    return_date Date,
+    FOREIGN KEY (book_id) REFERENCES books(book_id),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+-----------------------------------------------------
+Завдання 2
+USE LibraryManagement;
+INSERT INTO authors (author_name)
+VALUES ('Тарас Шевченко'),
+       ('Леся Українка'),
+       ('Іван Франко');
+
+INSERT INTO genres (genre_name)
+VALUES ('Роман'),
+       ('Поезія'),
+       ('Детектив');
+
+INSERT INTO books (title, publication_year, author_id, genre_id)
+VALUES ('Кобзар', 1843, 1, 1),
+       ('Лісова пісня', 1911, 2, 2),
+       ('Захар Беркут', 1883, 3, 3);
+
+INSERT INTO users (username, email)
+VALUES ('user_1', 'user1@example.com'),
+       ('user_2', 'user2@example.com'),
+       ('user_3', 'user3@example.com');
+
+INSERT INTO borrowed_books (borrow_id, book_id, user_id, borrow_date, return_date)
+VALUES (1, 1, 4, '2026-04-01', '2026-04-10'),
+       (2, 2, 5, '2026-04-02', NULL);
+---------------------------------------------------------------------------------
+Завдання 3
+
+use mydb;
+SELECT 
+    od.order_id,
+    o.date AS order_date,
+    c.name AS customer_name,
+    e.last_name AS employee_last_name,
+    p.name AS product_name,
+    cat.name AS category_name,
+    s.name AS supplier_name,
+    sh.name AS shipper_name,
+    od.quantity,
+    p.price AS unit_price
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+LIMIT 0, 1000;
+-----------------------------------------
+Завдання 4
+Завдання 4.1
+SELECT COUNT(*) AS total_rows
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+
+Завдання 4.2
+SELECT COUNT(*) AS total_left
+FROM order_details od
+LEFT JOIN orders o ON od.order_id = o.id
+LEFT JOIN customers c ON o.customer_id = c.id
+LEFT JOIN employees e ON o.employee_id = e.employee_id
+LEFT JOIN products p ON od.product_id = p.id
+LEFT JOIN categories cat ON p.category_id = cat.id
+LEFT JOIN suppliers s ON p.supplier_id = s.id
+LEFT JOIN shippers sh ON o.shipper_id = sh.id;
+
+SELECT COUNT(*) AS total_right
+FROM order_details od
+RIGHT JOIN orders o ON od.order_id = o.id;
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id;
+
+Висновок: Кількість рядків залишається незмінною при заміні INNER JOIN на LEFT JOIN чи RIGHT JOIN, тому що у схемі усі ключі мають відповідності.
+
+Завдання 4.3
+SELECT 
+    od.order_id,
+    o.date AS order_date,
+    c.name AS customer_name,
+    e.last_name AS employee_last_name,
+    p.name AS product_name,
+    cat.name AS category_name,
+    s.name AS supplier_name,
+    sh.name AS shipper_name,
+    od.quantity,
+    p.price AS unit_price
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+WHERE o.employee_id > 3 
+  AND o.employee_id <= 10
+LIMIT 0, 1000;
+
+Завдання 4.4
+SELECT 
+    cat.name AS category_name,
+    COUNT(*) AS total_rows,
+    AVG(od.quantity) AS avg_quantity
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+GROUP BY cat.name
+ORDER BY cat.name;
+
+Завдання 4.5
+SELECT 
+    cat.name AS category_name,
+    COUNT(*) AS total_rows,
+    AVG(od.quantity) AS avg_quantity
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+GROUP BY cat.name
+HAVING AVG(od.quantity) > 21
+ORDER BY cat.name;
+
+Завдання 4.6
+SELECT 
+    cat.name AS category_name,
+    COUNT(*) AS total_rows,
+    AVG(od.quantity) AS avg_quantity
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+GROUP BY cat.name
+HAVING AVG(od.quantity) > 21
+ORDER BY COUNT(*) DESC;
+
+Завдання 4.7
+SELECT 
+    od.order_id,
+    o.date AS order_date,
+    c.name AS customer_name,
+    e.last_name AS employee_last_name,
+    p.name AS product_name,
+    cat.name AS category_name,
+    s.name AS supplier_name,
+    sh.name AS shipper_name,
+    od.quantity,
+    p.price AS unit_price
+FROM order_details od
+INNER JOIN orders o 
+    ON od.order_id = o.id
+INNER JOIN customers c 
+    ON o.customer_id = c.id
+INNER JOIN employees e 
+    ON o.employee_id = e.employee_id
+INNER JOIN products p 
+    ON od.product_id = p.id
+INNER JOIN categories cat 
+    ON p.category_id = cat.id
+INNER JOIN suppliers s 
+    ON p.supplier_id = s.id
+INNER JOIN shippers sh 
+    ON o.shipper_id = sh.id
+LIMIT 1, 4;
