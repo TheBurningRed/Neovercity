@@ -1,0 +1,90 @@
+Завдання 1
+----------
+USE mydata;
+SELECT od.*,
+		(
+			SELECT o.customer_id
+			FROM orders o
+			WHERE o.id = od.order_id
+		) AS customer_id
+FROM order_details od;
+
+-------------------------------------------------
+
+Завдання 2
+----------
+USE mydata;
+SELECT od.*
+FROM order_details od
+WHERE od.order_id IN (
+	SELECT o.id
+    FROM orders o 
+    WHERE o.shipper_id = 3
+);
+
+-------------------------------------------------
+
+Завдання 3
+----------
+
+USE mydata;
+SELECT 
+	sub.order_id,
+    AVG(sub.quantity) AS avg_quantity
+FROM (
+	SELECT *
+    FROM order_details
+    WHERE quantity > 10
+) AS sub
+GROUP BY sub.order_id;
+
+-------------------------------------------------
+
+Завдання 4
+----------
+
+USE mydata;
+WITH temp AS (
+	SELECT *
+    FROM order_details
+    WHERE quantity > 10
+)
+SELECT
+	temp.order_id,
+    AVG(temp.quantity) AS avg_quantity
+FROM temp
+GROUP BY temp.order_id;
+
+-------------------------------------------------
+
+Завдання 5
+----------
+
+USE mydata;
+DROP FUNCTION IF EXISTS param_divide;
+
+DELIMITER //
+CREATE FUNCTION param_divide(
+	number_1 FLOAT,
+    number_2 FLOAT
+    )
+RETURNS FLOAT
+DETERMINISTIC
+BEGIN
+	DECLARE result FLOAT;
+    IF number_2 = 0 THEN
+		SET result = NULL;
+	ELSE
+		SET result = number_1 / number_2;
+	END IF;
+    RETURN result;
+END //
+
+DELIMITER ;
+
+SELECT
+	od.order_id,
+    od.product_id,
+    od.quantity,
+    param_divide(od.quantity, 5) AS divide_quantity
+FROM order_details od;
